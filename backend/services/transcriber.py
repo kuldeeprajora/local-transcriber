@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import gc
+import os
+import time
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Callable
@@ -9,6 +11,11 @@ from .hardware_detector import MachineProfile
 from .model_selector import lighter_model
 
 StatusCallback = Callable[[str], None]
+
+# Hugging Face reads these values while its module is imported. Configure them
+# before either transcription backend imports the Hub client.
+os.environ.setdefault("HF_HUB_DOWNLOAD_TIMEOUT", "60")
+os.environ.setdefault("HF_HUB_ETAG_TIMEOUT", "30")
 
 MIXED_LANGUAGE_PROMPT = (
     "नमस्ते। आज हम business, marketing, client, AI, video, content, strategy, "
@@ -36,6 +43,70 @@ def transcription_options(language: str) -> dict:
 
 class TranscriptionError(RuntimeError):
     pass
+
+
+def _permanent_download_error(exc: Exception) -> bool:
+    message = str(exc).lower()
+    return any(term in message for term in (
+        "401 client error",
+        "403 client error",
+        "gated repo",
+        "repository not found",
+        "no space left",
+        "disk full",
+        "permission denied",
+    ))
+
+
+def download_faster_whisper_model(
+    model_name: str,
+    status: StatusCallback | None = None,
+    attempts: int = 4,
+    download=None,
+    sleeper: Callable[[float], None] = time.sleep,
+) -> str:
+    """Return a complete cached model, resuming transiently interrupted downloads."""
+    if download is None:
+        try:
+            from faster_whisper.utils import download_model
+        except ImportError as exc:
+            raise TranscriptionError("faster-whisper is not installed. Run the safe installer again.") from exc
+        download = download_model
+
+    if status:
+        status("Checking the local model cache")
+    try:
+        return str(download(model_name, local_files_only=True))
+    except Exception:
+        # A missing or incomplete snapshot is expected on the first run. The
+        # network pass below reuses all complete blobs and resumes the rest.
+        pass
+
+    last_error: Exception | None = None
+    delays = (2, 5, 10)
+    for attempt in range(1, attempts + 1):
+        if status:
+            action = "Downloading model for first use" if attempt == 1 else "Resuming interrupted model download"
+            status(f"{action} (attempt {attempt} of {attempts})")
+        try:
+            return str(download(model_name, local_files_only=False))
+        except Exception as exc:
+            last_error = exc
+            if _permanent_download_error(exc):
+                raise TranscriptionError(
+                    "The model download cannot continue because access was denied or local storage is unavailable. "
+                    "Check disk space, folder permissions, and network access to huggingface.co."
+                ) from exc
+            if attempt < attempts:
+                if status:
+                    status(f"Connection interrupted; retrying model download in {delays[attempt - 1]} seconds")
+                sleeper(delays[attempt - 1])
+
+    raise TranscriptionError(
+        f"The model download was interrupted after {attempts} automatic attempts. The partial download is saved and will "
+        "resume instead of starting over. Check the internet connection, VPN, firewall, or antivirus, then click "
+        "Retry & resume."
+    ) from last_error
 
 
 class TranscriptionBackend(ABC):
@@ -127,10 +198,11 @@ class FasterWhisperBackend(TranscriptionBackend):
             self._model_name = None
             gc.collect()
             if status:
-                status(f"Loading or downloading {model_repo} for {device.upper()}")
+                status(f"Preparing {model_repo} for {device.upper()}")
+            model_path = download_faster_whisper_model(model_repo, status=status)
             try:
                 self._model = WhisperModel(
-                    model_repo,
+                    model_path,
                     device=device,
                     compute_type=compute_type,
                     cpu_threads=self.cpu_threads,

@@ -7,7 +7,7 @@ from backend.services.hardware_detector import MachineProfile
 from backend.services.job_manager import JobManager
 from backend.services.merger import merge_chunk_results, remove_prefix_overlap
 from backend.services.model_selector import select_model
-from backend.services.transcriber import transcription_options
+from backend.services.transcriber import TranscriptionError, download_faster_whisper_model, transcription_options
 from backend.services.quality import analyze_transcript
 
 
@@ -48,6 +48,43 @@ def test_windows_cpu_scales_model_to_resources():
     constrained = select_model(windows_cpu(8, 4), "auto")
     assert (capable.model, capable.compute_type) == ("medium", "int8")
     assert (constrained.model, constrained.compute_type) == ("small", "int8")
+
+
+def test_model_download_resumes_after_connection_reset():
+    calls = []
+    statuses = []
+    sleeps = []
+
+    def download(name, local_files_only):
+        calls.append((name, local_files_only))
+        if local_files_only or len(calls) == 2:
+            raise ConnectionResetError(10054, "connection forcibly closed")
+        return "C:/model-cache/complete-snapshot"
+
+    path = download_faster_whisper_model(
+        "large-v3",
+        status=statuses.append,
+        download=download,
+        sleeper=sleeps.append,
+    )
+    assert path.endswith("complete-snapshot")
+    assert calls == [("large-v3", True), ("large-v3", False), ("large-v3", False)]
+    assert sleeps == [2]
+    assert any("Resuming interrupted" in status for status in statuses)
+
+
+def test_model_download_failure_is_short_and_actionable():
+    def download(_name, _local_files_only):
+        raise ConnectionResetError(10054, "connection forcibly closed")
+
+    try:
+        download_faster_whisper_model("large-v3", download=download, sleeper=lambda _seconds: None)
+    except TranscriptionError as exc:
+        assert "four automatic attempts" in str(exc)
+        assert "Retry & resume" in str(exc)
+        assert "cached snapshot" not in str(exc)
+    else:
+        raise AssertionError("Expected the exhausted download to fail")
 
 
 def test_mixed_language_decoding_resists_repetition():

@@ -320,7 +320,7 @@ The NVIDIA driver, CUDA 12 libraries, or cuDNN 9 are missing or incompatible. CP
 
 ### Model download fails
 
-Check the internet connection, VPN, proxy, firewall, and available disk space. Then press Retry. Once the model has downloaded successfully, it remains cached locally.
+The tool preserves completed model files, uses longer transfer timeouts, and automatically retries an interrupted download four times. If all attempts fail, check the internet connection, VPN, proxy, firewall, antivirus, and available disk space, then press **Retry & resume**. It resumes the partial model rather than downloading completed files again. Once the model has downloaded successfully, it remains cached locally.
 
 ### The transcript has poor accuracy
 

@@ -68,6 +68,8 @@ exports/          TXT, SRT and full JSON
 
 Interrupted active jobs resume at launch. Completed chunks are skipped. Memory pressure triggers one retry after cache cleanup and then a model fallback, which is recorded in the job and shown in the UI.
 
+Interrupted Faster Whisper model downloads are retained and resumed automatically. The downloader uses longer Hub timeouts, makes four attempts with increasing delays, and leaves a concise Retry & resume instruction if the network remains unavailable.
+
 ## Quality modes
 
 - **Auto:** balances accuracy and speed for the detected RAM, VRAM, and CPU threads.

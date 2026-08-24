@@ -74,13 +74,14 @@ def test_model_download_resumes_after_connection_reset():
 
 
 def test_model_download_failure_is_short_and_actionable():
-    def download(_name, _local_files_only):
+    def download(_name, local_files_only):
+        del local_files_only
         raise ConnectionResetError(10054, "connection forcibly closed")
 
     try:
         download_faster_whisper_model("large-v3", download=download, sleeper=lambda _seconds: None)
     except TranscriptionError as exc:
-        assert "four automatic attempts" in str(exc)
+        assert "4 automatic attempts" in str(exc)
         assert "Retry & resume" in str(exc)
         assert "cached snapshot" not in str(exc)
     else:

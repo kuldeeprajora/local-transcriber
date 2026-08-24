@@ -6,3 +6,6 @@ __pycache__/
 data/jobs/*
 !data/jobs/.gitkeep
 /Local-Transcriber-Share.zip
+setup-windows.log
+setup-mac.log
+.venv-broken-*/

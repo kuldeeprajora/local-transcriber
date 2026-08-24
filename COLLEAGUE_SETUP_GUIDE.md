@@ -99,6 +99,18 @@ INSTALL-WINDOWS.bat
 
 Wait until it reports **SETUP COMPLETE**. It verifies Python packages, FFmpeg, and FFprobe and keeps the window open if anything needs attention.
 
+The Windows installer is fail-safe and attempts recovery in this order:
+
+1. Find Python through `py`, `python`, and the standard installation folders.
+2. If Python is absent and `winget` is available, install Python 3.12 automatically.
+3. Preserve a damaged `.venv` under a `.venv-broken-*` name and create a clean environment.
+4. Retry failed package downloads without pip's cache and with longer network timeouts.
+5. Force-reinstall the transcription backend if its import check fails.
+6. Install FFmpeg automatically through `winget` when available.
+7. Write the last setup status to `setup-windows.log` for troubleshooting.
+
+If automatic installation changes the Windows `PATH`, the installer may ask you to close it and run it once more. No completed setup work is lost.
+
 After setup, double-click:
 
 ```text
@@ -191,6 +203,8 @@ INSTALL-MAC.command
 
 Wait until it reports **SETUP COMPLETE**. It verifies Python packages, FFmpeg, and FFprobe and keeps the window open if anything needs attention.
 
+The Mac installer uses the same recovery pattern: it tries available compatible Python versions, uses Homebrew for missing Python or FFmpeg when Homebrew is installed, preserves a broken `.venv`, retries package downloads without cache, repairs the selected MLX or Faster Whisper backend, and writes status to `setup-mac.log`.
+
 After setup, double-click:
 
 ```text
@@ -235,6 +249,8 @@ python3.12 -m venv .venv
 7. Select **Transcribe locally**.
 8. When complete, review the transcript and export TXT, SRT, or JSON.
 
+The normal launcher performs a quick readiness check. If Python packages or FFmpeg have become unavailable, it starts the safe installer automatically instead of attempting to launch a broken server.
+
 To stop the tool, return to its terminal window and press `Ctrl+C`. Closing the terminal also stops the local server.
 
 ## Quality-mode advice
@@ -270,11 +286,11 @@ Run both `ffmpeg -version` and `ffprobe -version` in a new terminal. If either c
 
 ### Python is not found
 
-Install 64-bit Python 3.12, close all terminal windows, and try again. On Windows verify `py -3.12 --version`; on Mac verify `python3.12 --version`.
+Run the platform's `INSTALL` file again. It first attempts an automatic installation through Windows Package Manager or an existing Homebrew installation. If those package managers are unavailable, install 64-bit Python 3.12 manually, close all terminal windows, and retry. On Windows verify `py -3.12 --version`; on Mac verify `python3.12 --version`.
 
 ### A Python package is missing
 
-From the project folder, reinstall the requirements.
+Run the platform's `INSTALL` file first. It retries normal installation, no-cache installation, and backend repair automatically. If all recovery attempts fail, inspect `setup-windows.log` or `setup-mac.log`, then try the manual command below.
 
 Windows:
 

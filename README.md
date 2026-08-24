@@ -4,6 +4,8 @@ A private, resumable transcription tool for macOS and Windows (Linux is also sup
 
 For a non-technical handoff with separate Mac and Windows instructions, see [`COLLEAGUE_SETUP_GUIDE.md`](COLLEAGUE_SETUP_GUIDE.md).
 
+The double-click installers include automatic prerequisite installation where a trusted system package manager is available, broken-environment backup, dependency retries, backend repair, FFmpeg recovery, and diagnostic logs. Normal launchers invoke repair setup automatically when their readiness check fails.
+
 ## Automatic runtime selection
 
 | Hardware | Backend | Auto mode |

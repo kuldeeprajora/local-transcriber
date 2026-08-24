@@ -5,3 +5,4 @@ __pycache__/
 .pytest_cache/
 data/jobs/*
 !data/jobs/.gitkeep
+/Local-Transcriber-Share.zip

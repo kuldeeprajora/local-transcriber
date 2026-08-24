@@ -1,0 +1,6 @@
+{
+  "chunk_seconds": 600,
+  "overlap_seconds": 3,
+  "host": "127.0.0.1",
+  "port": 8000
+}

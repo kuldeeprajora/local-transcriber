@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Local Transcriber</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 rx=%2216%22 fill=%22%2319211d%22/><text x=%2232%22 y=%2240%22 text-anchor=%22middle%22 font-family=%22Arial%22 font-size=%2223%22 font-weight=%22700%22 fill=%22%23d8ff72%22>LT</text></svg>">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Local Transcriber home">
+      <span class="brand-mark">LT</span>
+      <span>Local Transcriber</span>
+    </a>
+    <span class="local-pill"><i></i> Local processing</span>
+  </header>
+
+  <main class="shell">
+    <section class="intro">
+      <p class="eyebrow">PRIVATE BY DEFAULT</p>
+      <h1>Turn recordings into<br><em>searchable text.</em></h1>
+      <p>Your media stays on this computer. No paid cloud transcription API, analytics, or telemetry.</p>
+    </section>
+
+    <section class="workspace" aria-label="Transcription workspace">
+      <aside class="system-card">
+        <div class="section-heading"><span>System</span><span id="systemState" class="status-dot">Checking</span></div>
+        <div class="machine-icon">⌁</div>
+        <h2 id="chip">Detecting hardware…</h2>
+        <p id="memory">—</p>
+        <dl>
+          <div><dt>Backend</dt><dd id="backend">—</dd></div>
+          <div><dt>Recommended</dt><dd id="profile">—</dd></div>
+          <div><dt>FFmpeg</dt><dd id="ffmpeg">—</dd></div>
+        </dl>
+        <div class="privacy-note">
+          <span>⌂</span>
+          <div><strong>Nothing leaves this computer</strong><small>Processing and job files remain local.</small></div>
+        </div>
+      </aside>
+
+      <div class="main-card">
+        <div id="setupView">
+          <div class="section-heading"><span>New transcription</span><span>01</span></div>
+          <label id="dropzone" class="dropzone" for="fileInput">
+            <input id="fileInput" type="file" accept=".mp4,.mov,.mkv,.mp3,.wav,.m4a">
+            <span class="upload-icon">↑</span>
+            <strong id="dropTitle">Drop a recording here</strong>
+            <small id="dropHint">MP4, MOV, MKV, MP3, WAV or M4A</small>
+            <span class="select-link">Choose file</span>
+          </label>
+
+          <div id="fileSummary" class="file-summary hidden">
+            <div class="file-badge">♪</div>
+            <div><strong id="fileName"></strong><small id="fileMeta"></small></div>
+            <button id="removeFile" class="icon-button" aria-label="Remove selected file">×</button>
+          </div>
+
+          <div class="settings-grid">
+            <label>Language
+              <select id="language">
+                <option value="auto">Auto detect</option>
+                <option value="en">English</option>
+                <option value="hi">Hindi</option>
+                <option value="hi-en" selected>Hindi + English</option>
+              </select>
+            </label>
+            <fieldset>
+              <legend>Quality</legend>
+              <div class="segmented">
+                <label><input type="radio" name="quality" value="auto" checked><span>Auto</span></label>
+                <label><input type="radio" name="quality" value="accurate"><span>Accurate</span></label>
+                <label><input type="radio" name="quality" value="fast"><span>Fast</span></label>
+              </div>
+            </fieldset>
+          </div>
+          <div class="model-line"><span>Detected model</span><strong id="modelName">Waiting for system check</strong></div>
+          <button id="transcribeButton" class="primary-button" disabled><span>Transcribe locally</span><b>→</b></button>
+          <p id="formError" class="error-text" role="alert"></p>
+        </div>
+
+        <div id="progressView" class="hidden">
+          <div class="section-heading"><span id="progressLabel">Processing</span><span id="percent">0%</span></div>
+          <div class="job-title"><div class="file-badge">♪</div><div><h2 id="jobFilename"></h2><p id="stageDetail">Preparing…</p></div></div>
+          <div class="progress-track"><i id="progressBar"></i></div>
+          <div class="stats">
+            <div><small>Duration</small><strong id="jobDuration">—</strong></div>
+            <div><small>Model</small><strong id="jobModel">—</strong></div>
+            <div><small>Processed</small><strong id="processed">—</strong></div>
+          </div>
+          <div class="chunk-block"><div><span>Chunks</span><span id="chunkCount">0 / 0</span></div><div id="chunkList" class="chunks"></div></div>
+          <div id="adjustment" class="adjustment hidden"></div>
+          <div id="qualityWarning" class="adjustment hidden"></div>
+          <div id="failureBox" class="failure hidden"><strong>Transcription paused</strong><p id="failureMessage"></p><button id="retryButton" class="secondary-button">Retry & resume</button></div>
+          <div id="completeActions" class="complete-actions hidden">
+            <button id="viewTranscript" class="primary-button"><span>View transcript</span><b>→</b></button>
+            <button id="retranscribe" class="secondary-button improve-button">Re-transcribe in Accurate mode</button>
+            <div class="exports"><span>Export</span><a data-kind="txt">TXT</a><a data-kind="srt">SRT</a><a data-kind="json">JSON</a></div>
+          </div>
+          <button id="newJob" class="text-button">← Start another transcription</button>
+        </div>
+
+        <div id="transcriptView" class="hidden">
+          <div class="section-heading"><button id="backToJob" class="text-button">← Job</button><span>Transcript</span></div>
+          <div class="transcript-head"><h2 id="transcriptTitle">Transcript</h2><input id="search" type="search" placeholder="Search transcript…"></div>
+          <div id="segments" class="segments"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="/app.js" defer></script>
+</body>
+</html>

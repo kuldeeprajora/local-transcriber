@@ -173,6 +173,11 @@ def test_retranscription_clone_reuses_local_media(tmp_path: Path):
     assert (clone_paths["audio"] / "audio.wav").read_bytes() == b"audio"
 
 
+def test_new_job_has_no_music_markers_until_requested_or_transcribed(tmp_path: Path):
+    job = JobManager(tmp_path / "jobs").create("meeting.mp4", "source.mp4")
+    assert job["music_segments"] == []
+
+
 def test_quality_report_flags_hallucination_loop():
     report = analyze_transcript({"segments": [{
         "start": 10, "end": 20, "text": "तो तो तो तो तो तो तो तो तो तो और फिर"

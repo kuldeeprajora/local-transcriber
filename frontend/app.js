@@ -163,6 +163,19 @@ async function retranscribe() {
   }
 }
 
+async function markMusic() {
+  const button = $("#markMusic");
+  button.disabled = true; button.textContent = "Marking music sections…";
+  try {
+    state.job = await api(`/api/jobs/${state.job.id}/mark-music`, { method: "POST" });
+    button.textContent = state.job.music_segments?.length ? `Music markers added (${state.job.music_segments.length})` : "No music sections detected";
+    renderJob();
+  } catch (error) {
+    $("#stageDetail").textContent = error.message;
+    button.disabled = false; button.textContent = "Mark music / song sections";
+  }
+}
+
 async function openTranscript() {
   try {
     const transcript = await api(`/api/jobs/${state.job.id}/transcript`);
@@ -193,6 +206,7 @@ document.querySelectorAll('input[name="quality"]').forEach(input => input.addEve
 $("#transcribeButton").addEventListener("click", createAndStart);
 $("#retryButton").addEventListener("click", retry);
 $("#retranscribe").addEventListener("click", retranscribe);
+$("#markMusic").addEventListener("click", markMusic);
 $("#viewTranscript").addEventListener("click", openTranscript);
 $("#backToJob").addEventListener("click", showProgress);
 $("#search").addEventListener("input", renderTranscript);

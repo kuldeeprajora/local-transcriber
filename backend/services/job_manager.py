@@ -59,6 +59,7 @@ class JobManager:
             "error": None,
             "model_adjustment": None,
             "quality_report": None,
+            "music_segments": [],
         }
         self.save(job)
         return job

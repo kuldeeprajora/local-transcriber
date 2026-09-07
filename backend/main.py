@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -13,6 +14,8 @@ from .services.hardware_detector import detect_hardware
 from .services.job_manager import JobManager
 from .services.media import SUPPORTED_EXTENSIONS, MediaError, probe_media
 from .services.model_selector import select_model
+from .services.exporter import write_exports
+from .services.music_detector import add_music_markers, detect_music, likely_chant_or_song_segments
 from .services.pipeline import PipelineRunner
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -179,14 +182,35 @@ def retranscribe_job(job_id: str, request: StartJobRequest) -> dict:
     return manager.public(job)
 
 
+@app.post("/api/jobs/{job_id}/mark-music")
+def mark_music(job_id: str) -> dict:
+    """Add local music/chant markers to a completed transcript without re-transcribing."""
+    job = get_job(job_id)
+    if job.get("status") != "COMPLETED":
+        raise HTTPException(409, "Music markers can be added after transcription completes")
+    paths = manager.paths(job_id)
+    transcript_path = paths["results"] / "merged.json"
+    audio_path = paths["audio"] / "audio.wav"
+    if not transcript_path.is_file() or not audio_path.is_file():
+        raise HTTPException(404, "The saved transcript or audio is not ready")
+    transcript = json.loads(transcript_path.read_text(encoding="utf-8"))
+    # Make the operation idempotent if the colleague clicks it more than once.
+    transcript["segments"] = [item for item in transcript.get("segments", []) if item.get("kind") != "music"]
+    events = detect_music(audio_path) + likely_chant_or_song_segments(transcript)
+    transcript = add_music_markers(transcript, events)
+    transcript_path.write_text(json.dumps(transcript, ensure_ascii=False, indent=2), encoding="utf-8")
+    job["music_segments"] = transcript["music_segments"]
+    job["exports"] = write_exports(job, transcript, paths["exports"])
+    manager.save(job)
+    return manager.public(job)
+
+
 @app.get("/api/jobs/{job_id}/transcript")
 def transcript(job_id: str) -> dict:
     job = get_job(job_id)
     path = manager.paths(job_id)["results"] / "merged.json"
     if not path.is_file():
         raise HTTPException(404, "Transcript is not ready")
-    import json
-
     return json.loads(path.read_text(encoding="utf-8"))
 
 

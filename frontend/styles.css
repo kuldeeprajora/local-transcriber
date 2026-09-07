@@ -104,6 +104,9 @@ legend { padding: 0; margin-bottom: 10px; }
 .segment { display: grid; grid-template-columns: 85px 1fr; gap: 15px; border-bottom: 1px solid var(--line); padding: 18px 2px; }
 .segment time { color: var(--green); font-size: 12px; font-variant-numeric: tabular-nums; }
 .segment p { margin: 0; line-height: 1.6; font-size: 14px; }
+.music-segment { background: #fff8df; border: 1px solid #ead89b; border-radius: 9px; margin: 10px 0; padding: 13px 11px; }
+.music-segment time { color: #8a6a16; }
+.music-segment p { color: #6b5311; font-weight: 700; font-size: 13px; }
 .hidden { display: none !important; }
 @media (max-width: 760px) {
   .shell { width: min(100% - 24px, 600px); padding-top: 38px; }

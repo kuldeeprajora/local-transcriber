@@ -13,6 +13,7 @@ from .job_manager import JobManager
 from .media import extract_audio, probe_media, require_ffmpeg
 from .merger import merge_chunk_results
 from .model_selector import select_model
+from .music_detector import add_music_markers, detect_music, likely_chant_or_song_segments
 from .quality import analyze_transcript
 from .transcriber import TranscriptionError, create_backend, fallback_repo, is_memory_error, release_memory
 
@@ -139,6 +140,11 @@ class PipelineRunner:
             for chunk in job["chunks"]
         ]
         transcript = merge_chunk_results(results)
+        job["stage_detail"] = "Detecting music and song sections"
+        self.manager.save(job)
+        music_segments = detect_music(audio) + likely_chant_or_song_segments(transcript)
+        transcript = add_music_markers(transcript, music_segments)
+        job["music_segments"] = music_segments
         _write_json(paths["results"] / "merged.json", transcript)
         job["quality_report"] = analyze_transcript(transcript)
 

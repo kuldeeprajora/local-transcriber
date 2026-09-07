@@ -260,6 +260,8 @@ To stop the tool, return to its terminal window and press `Ctrl+C`. Closing the 
 - **Fast:** use for quick drafts where some recognition errors are acceptable.
 - **Hindi + English:** use when speakers naturally switch between both languages.
 
+The transcript can add a highlighted `[Music / song / chanting — automatically detected]` entry for sustained music-like audio. It is a local, conservative detector intended to make introductions, bhajans, songs, jingles, and instrumental breaks easy to skip. It recognizes instrumental/non-speech music throughout the recording and uses a stricter chant/lyric pattern for the opening ten minutes, where intros normally occur. It does not remove the audio or spoken transcript; review the marker if the distinction matters.
+
 For best accuracy, start with a clean recording, avoid very low speaker volume, and remove long music-only introductions when practical. Songs, chants, and overlapping speech are harder for speech transcription models than normal spoken dialogue.
 
 ## First transcription

@@ -7,6 +7,7 @@ from backend.services.hardware_detector import MachineProfile
 from backend.services.job_manager import JobManager
 from backend.services.merger import merge_chunk_results, remove_prefix_overlap
 from backend.services.model_selector import select_model
+from backend.services.music_detector import add_music_markers, likely_chant_or_song_segments, likely_music_blocks
 from backend.services.transcriber import TranscriptionError, download_faster_whisper_model, transcription_options
 from backend.services.quality import analyze_transcript
 
@@ -128,6 +129,33 @@ def test_exports(tmp_path: Path):
     assert (tmp_path / exports["txt"]).read_text() == "Hello world\n"
     assert "00:00:04,120 --> 00:00:08,920" in (tmp_path / exports["srt"]).read_text()
     assert json.loads((tmp_path / exports["json"]).read_text())["segments"][0]["text"] == "Hello world"
+
+
+def test_music_detection_marks_only_sustained_music_like_audio():
+    events = likely_music_blocks([
+        {"start": 0, "end": 3, "active_ratio": 0.9, "speech_ratio": 0.1},
+        {"start": 3, "end": 6, "active_ratio": 0.9, "speech_ratio": 0.2},
+        {"start": 6, "end": 9, "active_ratio": 0.9, "speech_ratio": 0.2},
+        {"start": 9, "end": 12, "active_ratio": 0.95, "speech_ratio": 0.9},
+    ])
+    assert events == [{"start": 0.0, "end": 9.0, "kind": "music"}]
+
+    transcript = add_music_markers(
+        {"language": "en", "segments": [{"start": 9, "end": 12, "text": "Welcome", "words": []}]},
+        events,
+    )
+    assert transcript["segments"][0]["kind"] == "music"
+    assert transcript["segments"][0]["text"].startswith("[Music / song")
+    assert transcript["segments"][1]["text"] == "Welcome"
+
+
+def test_repetitive_chant_is_marked_when_voice_detection_is_not_enough():
+    events = likely_chant_or_song_segments({"segments": [
+        {"start": 10, "end": 22, "text": "bhaje hum bhaje hum bhaje hum bhaje hum bhaje hum", "words": []},
+        {"start": 30, "end": 35, "text": "Normal spoken explanation starts here", "words": []},
+        {"start": 700, "end": 720, "text": "good good good good good good good good", "words": []},
+    ]})
+    assert events == [{"start": 10.0, "end": 22.0, "kind": "music"}]
 
 
 def test_retranscription_clone_reuses_local_media(tmp_path: Path):

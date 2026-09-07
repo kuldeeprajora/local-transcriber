@@ -79,6 +79,8 @@ Interrupted Faster Whisper model downloads are retained and resumed automaticall
 
 Completed transcripts receive a deterministic quality report. Repetition loops and invalid text are flagged for review rather than silently rewritten.
 
+Sustained music/song-like audio is also marked as a separate timestamped, highlighted transcript and SRT entry. It is detected locally using audio activity and voice activity; an additional strict chant/lyric signal helps with opening bhajans and songs. It remains a conservative navigation aid rather than a claim that every vocal performance is music.
+
 ## Tests
 
 The core tests do not download a model:

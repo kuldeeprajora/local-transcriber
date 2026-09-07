@@ -175,7 +175,7 @@ async function openTranscript() {
 function renderTranscript() {
   const query = $("#search").value.trim().toLowerCase();
   const segments = state.transcript.filter(s => !query || s.text.toLowerCase().includes(query));
-  $("#segments").innerHTML = segments.length ? segments.map(s => `<article class="segment"><time>${formatTime(s.start, true)}</time><p>${escapeHtml(s.text)}</p></article>`).join("") : '<p class="error-text">No matching transcript text.</p>';
+  $("#segments").innerHTML = segments.length ? segments.map(s => `<article class="segment ${s.kind === "music" ? "music-segment" : ""}"><time>${formatTime(s.start, true)}</time><p>${escapeHtml(s.text)}</p></article>`).join("") : '<p class="error-text">No matching transcript text.</p>';
 }
 function escapeHtml(text) { const node = document.createElement("div"); node.textContent = text; return node.innerHTML; }
 
